@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e
+cd `dirname $0`
+cd .. # project root
+
+docker/compose build
+docker/compose run --rm -it app bash
