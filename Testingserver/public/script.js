@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const response = await fetch('/api/data', {
+            const response = await fetch('/api/messages', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ name, message })
+                body: JSON.stringify({ content: `${name}: ${message}` })
             });
             
             if (response.ok) {
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dataList.innerHTML = '<p id="loading">Loading data...</p>';
         
         try {
-            const response = await fetch('/api/data');
+            const response = await fetch('/api/messages');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch data');
@@ -72,14 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Display the data
             dataList.innerHTML = '';
             data.forEach(item => {
-                const date = new Date(item.createdAt).toLocaleString();
-                
                 const dataItem = document.createElement('div');
                 dataItem.className = 'data-item';
                 dataItem.innerHTML = `
-                    <h3>${item.name}</h3>
-                    <p>${item.message}</p>
-                    <div class="date">Added on: ${date}</div>
+                    <h3>Message ID: ${item.id}</h3>
+                    <p>${item.content}</p>
+                    <button onclick="deleteMessage(${item.id})">Delete</button>
                 `;
                 
                 dataList.appendChild(dataItem);
@@ -90,3 +88,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+// Function to delete a message
+async function deleteMessage(id) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        try {
+            const response = await fetch(`/api/messages/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert('Message deleted successfully!');
+                // Refresh the data display
+                document.getElementById('refresh-btn').click();
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete message');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error: ${error.message}`);
+        }
+    }
+}

@@ -1,13 +1,21 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='public')
 # Enable CORS for all routes
 CORS(app)
 
-# Configure SQLite database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
+# Configure SQLite database - ensure directory exists and is accessible
+basedir = os.path.abspath(os.path.dirname(__file__))
+# Create instance directory if it doesn't exist
+instance_path = os.path.join(basedir, 'instance')
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path)
+    
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'mydatabase.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Define a simple model
@@ -50,5 +58,18 @@ def delete_message(message_id):
     db.session.commit()
     return jsonify({"success": True, "message": f"Message {message_id} deleted"})
 
+# Serve static files from the public directory
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_static(path):
+    if path == "" or path == "/":
+        return send_from_directory(app.static_folder, 'index.html')
+    try:
+        return send_from_directory(app.static_folder, path)
+    except:
+        return send_from_directory(app.static_folder, 'index.html')
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
