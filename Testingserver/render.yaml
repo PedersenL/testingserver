@@ -3,7 +3,7 @@ services:
     name: flask-message-app
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn servers.database:app
+    startCommand: gunicorn database:app
     envVars:
       - key: FLASK_ENV
         value: production
